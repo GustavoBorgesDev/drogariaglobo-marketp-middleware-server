@@ -6,6 +6,7 @@ const headersVtex = require("../configs/vtex-headers");
 const prodCredentials = require("../configs/production-credentials");
 const utilDate = require("../utils/getFormatedDateInISO");
 const utilToken = require("../utils/getInterplayersToken");
+const cron = require('node-cron');
 
 let moment = require("moment");
 let mmtz = require('moment-timezone');
@@ -15,8 +16,12 @@ mmtz.tz('America/Sao_Paulo');
 // Utils
 const utilMd = require("../utils/sendDataMd");
 
-router.post("/middleware/v2/run-middleware-orders", async (req, res) => {
+// '40 6 * * *' significa às 6:40 da manhã
+cron.schedule('50 6 * * *', () => {
+    runOrders();
+});
 
+const runOrders = async () => {
     console.log("\n\n\n----- [controller.orders.js] ----- \n");
     console.log("----- INICIANDO MIDDLWARE ORDERS ----- \n\n");
     console.log("[1] - Buscando dados do Master Data V2\n");
@@ -93,9 +98,7 @@ router.post("/middleware/v2/run-middleware-orders", async (req, res) => {
     
     // Caso não tenha nenhum pedido aguardando confirmação
     if (listOrders.length == 0) {
-        res.send({
-            message: "Nenhum pedido esperando confirmação."
-        });
+        console.log("\nNenhum pedido esperando confirmação.\n");
         return;
     }
 
@@ -173,35 +176,22 @@ router.post("/middleware/v2/run-middleware-orders", async (req, res) => {
     let respMd = await utilMd.sendDataMd(dataStatus, "SP");
     if (respMd.status == "201") {
         console.log("[4.1] - Log salvo!\n");
-        res.json({
-            message: dataMessage.message,
-            status: respMd.status
-        });
-    } else {
-        console.log("[4.1] - Log não salvo!\n");
-        res.json({
-            message: dataMessage.message,
-            status: respMd.status
-        });
-    }
-
-    // let respHello = await sendHelloMD(dataMessage);
-    // if (respHello.status == "201") {
-    //     console.log("[4.1] - Log salvo!\n");
-    //     res.json({
-    //         message: dataMessage.message,
-    //         status: respHello.status
-    //     });
-    // } else {
-    //     console.log("[4.1] - Log não salvo!\n");
-    //     res.json({
-    //         message: dataMessage.message,
-    //         status: respHello.status
-    //     });
-    // }
+    } 
 
     console.log("[END] - Middleware - Interplayers encerrado.\n");
+}
 
+router.post("/middleware/v2/run-middleware-orders", async (req, res) => {
+    try {
+        res.json({
+            message: "Sucesso Orders"
+        });
+    }
+    catch (e) {
+        res.json({
+            message: "Erro."
+        });
+    }
 });
 
 const getEffectedList = async () => {

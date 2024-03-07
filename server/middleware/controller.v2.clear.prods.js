@@ -3,35 +3,41 @@ const router = express.Router();
 const axios = require("axios");
 const headersVtex = require("../configs/vtex-headers");
 const dm = require("../configs/domains");
+const cron = require('node-cron');
 
-router.post("/middleware/v2/run-clear-all-products", async (req, res) => {
+// Neste caso, '0 6 * * *' significa todos os dias às 6 da manhã
+cron.schedule('10 6 * * *', () => {
+    runClearProds();
+});
 
-    try {
-        console.log("\n\n[1 - Init] - Buscando todos produtos com PBM.\n");
+const runClearProds = async () => {
+    console.log("\n\n[1 - Init] - Buscando todos produtos com PBM.\n");
 
-        let listProductsSearched = await getAllProductsPBM();
+    let listProductsSearched = await getAllProductsPBM();
 
-        console.log(`[2 - Done] - Produtos com PBM recuperados. Total: ${listProductsSearched.length}\n`);
-        if (listProductsSearched.length == 0) {
-            res.json({
-                message: "Encerrado por nao ter nenhum produto com PBM.",
-                total: listProductsSearched.length
-            });
-        }
-
-        let respUpdate = await clearSpecificationFields(listProductsSearched);
-    
-        console.log("[3 - Done] - Especificações limpas.\n\n");
-        console.log("[END] - Middleware de limpeza executado com sucesso e encerrado. ======.");
-    
+    console.log(`[2 - Done] - Produtos com PBM recuperados. Total: ${listProductsSearched.length}\n`);
+    if (listProductsSearched.length == 0) {
         res.json({
-            message: "Sucesso!",
-            totalCleared: respUpdate.length
+            message: "Encerrado por nao ter nenhum produto com PBM.",
+            total: listProductsSearched.length
         });
     }
-    catch(e) {
+
+    await clearSpecificationFields(listProductsSearched);
+
+    console.log("[3 - Done] - Especificações limpas.\n\n");
+    console.log("[END] - Middleware de limpeza executado com sucesso e encerrado. ======.");
+}
+
+router.post("/middleware/v2/run-clear-all-products", async (req, res) => {
+    try {
         res.json({
-            message: console.log(e.message)
+            message: "Sucesso!"
+        });
+    }
+    catch (e) {
+        res.json({
+            message: "Erro."
         });
     }
 });
@@ -73,7 +79,7 @@ const getAllProductsPBM = async () => {
 
 const clearSpecificationFields = async (listToClear) => {
     let filtered = [];
-    for (let i=0; i<listToClear.length; i++) {
+    for (let i = 0; i < listToClear.length; i++) {
         let updatedProductInfo = [
             {
                 "Value": [
@@ -133,7 +139,7 @@ const clearSpecificationFields = async (listToClear) => {
             },
             {
                 "Value": [
-                    '' 
+                    ''
                 ],
                 "Id": 51,
                 "Name": "discountType"

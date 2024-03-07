@@ -3,6 +3,7 @@ const router = express.Router();
 const axios = require("axios");
 const headersVtex = require("../configs/vtex-headers");
 const dm = require("../configs/domains");
+const cron = require('node-cron');
 
 let moment = require("moment");
 let mmtz = require('moment-timezone');
@@ -12,19 +13,21 @@ mmtz.tz('America/Sao_Paulo');
 // Utils
 const utilMd = require("../utils/sendDataMd");
 
-router.post("/middleware/v2/run-middleware-update-specifications", async (req, res) => {
+// '20 6 * * *' significa às 6:20 da manhã
+cron.schedule('30 6 * * *', () => {
+    runUpdateSpecifications();
+});
 
+const runUpdateSpecifications = async () => {
     console.log("\n\n\n----- [controller.specifications.js] ----- \n");
     console.log("----- INICIANDO MIDDLWARE VTEX ----- \n\n\n");
     console.log("[1] - Buscando o Load Tables desse dia no MD...\n");
 
     const respLt = await getLoadTablesToday();
-    
+
     // Pego o ultimo item criado, sempre na posição ZERO [0] - respLt[0]
     if (respLt.status != 200 || respLt.data[0].length == []) {
-        res.json({
-            message: "Nenhuma carda localizada hoje."
-        });
+        console.log("\mNenhum card localizado.\m");
         return;
     }
 
@@ -35,10 +38,6 @@ router.post("/middleware/v2/run-middleware-update-specifications", async (req, r
     const respListProductsOn = await getAllProductsByEAN(listProductsEAN);
     console.log(`\n[2] - (Sucesso) - EAN's do programa verificados. Total: ${respListProductsOn.eanValided.length} \n`);
 
-    res.json({
-        develop: true
-    })
-    return;
     console.log("[3] - Atualizando as especificações dos Produtos...\n");
     const respSpecs = await updateEANspecifications(respListProductsOn);
     console.log("Total EAN: ", respSpecs.length);
@@ -63,35 +62,24 @@ router.post("/middleware/v2/run-middleware-update-specifications", async (req, r
     let respMd = await utilMd.sendDataMd(dataStatus, "SE");
     if (respMd.status == "201") {
         console.log("[4.1] - Log salvo!\n");
-        res.json({
-            message: dataMessage.message,
-            status: respMd.status
-        });
     } else {
         console.log("[4.1] - Log não salvo!\n");
-        res.json({
-            message: dataMessage.message,
-            status: respMd.status
-        });
     }
 
-    // const respAlive = await sendDataToMD(dataMessage);
-    // if (respAlive.status == "201") {
-    //     console.log("MD V2 - Dados Criados com sucesso!");
-    //     console.log(respAlive.data);
-    //     res.json({
-    //         message: dataMessage.message,
-    //         status: respAlive.status
-    //     });
-    // } else {
-    //     console.log("MD V2 - Status diferente de 201: ", respAlive.status);
-    //     res.json({
-    //         message: dataMessage.message,
-    //         status: respAlive.status
-    //     });
-    // }
-
     console.log("[END] - Middleware [SPECIFICATIONS] - Vtex encerrado.\n");
+}
+
+router.post("/middleware/v2/run-middleware-update-specifications", async (req, res) => {
+    try {
+        res.json({
+            message: "Sucesso Specifications"
+        });
+    }
+    catch (e) {
+        res.json({
+            message: "Erro."
+        });
+    }
 });
 
 // Action: Pego o Load Tables Diario do MD (nosso backup)
@@ -122,36 +110,36 @@ const getAllProductsByEAN = async (listEAN) => {
 
         if (eanToVerify.ean == 7899706192712) {
             try {
-    
+
                 let respRequest = await getEAN(eanToVerify.ean);
                 let respProdcutRequest = await getProductData(respRequest.data.ProductId);
                 let dataProduct = respProdcutRequest.data[0];
-    
+
                 let vtexPrice = dataProduct.items[0].sellers[0].commertialOffer.Price;
                 let vtexListPrice = dataProduct.items[0].sellers[0].commertialOffer.ListPrice;
-    
+
                 // let betterDiscount = findBestterDiscount(vtexPrice, eanToVerify);
                 let betterDiscount = findBestterDiscount(vtexListPrice, eanToVerify);
                 let betterDiscValue = betterDiscount.newPriceDiscount;
-    
+
                 if (typeof betterDiscValue === 'number') {
                     betterDiscValue = betterDiscValue.toString();
                 }
-    
+
                 let formatedPrices = {
                     discountPrice: betterDiscValue,
                     discountPriceFormated: `R$ ${betterDiscValue.replace(".", ",")}`,
                     discountPercentage: betterDiscount.btDiscPercentage
                 }
-    
+
                 let table = {
                     tableId: listEAN.tableId
                 };
-    
+
                 let productId = {
                     id: dataProduct.productId
                 }
-    
+
                 let infoCombo = null;
                 if (
                     (eanToVerify.eanCombos.ean && eanToVerify.eanCombos.ean.length > 1) ||
@@ -165,22 +153,22 @@ const getAllProductsByEAN = async (listEAN) => {
                         listCombos: "SEM DESCONTO COMBO"
                     }
                 }
-    
+
                 let eanData = { ...eanToVerify, formatedPrices, table, productId, infoCombo };
-    
+
                 console.log(`[${countFounded}] - EAN: [${eanToVerify.ean}] foi organizado. Salvando para o proximo passo.`);
-    
+
                 listEanValided.push(eanData);
                 listEanToSave.push(eanToVerify);
                 countFounded++;
-    
+
             } catch (e) {
                 console.log(`EAN: ${eanToVerify.ean} não verificado.`);
                 countNotFound++;
             }
         }
 
-        
+
     }
 
     console.log("\nTotal de EAN's Não encontrados: ", countNotFound);
@@ -361,7 +349,7 @@ const findBestterDiscount = (vtexPrice, eanData) => {
                 console.log("CASE - F\n");
                 betterDiscount = vtexPrice;
         }
-    
+
         let resultPrice = null;
         if (betterDiscount != vtexPrice) {
             btDiscPercentage = (Number(discountSelected) / 100).toFixed(2);
@@ -370,12 +358,12 @@ const findBestterDiscount = (vtexPrice, eanData) => {
 
             // Valor Final
             resultPrice = (vtexPrice - betterDiscount).toFixed(2);
-        } 
+        }
         // Se for igual
         else if (betterDiscount == vtexPrice) {
             // console.log("VtexPrice: ", vtexPrice)
             resultPrice = vtexPrice;
-        } 
+        }
         // Se o valor do desconto da loja for maior que o do PBM considero o da loja
         else if (resultPrice > vtexPrice) {
             resultPrice = vtexPrice;
@@ -388,7 +376,7 @@ const findBestterDiscount = (vtexPrice, eanData) => {
             btDiscPercentage: btDiscPercentage
         }
     }
-    catch(e) {
+    catch (e) {
         console.log(e.message)
     }
 
