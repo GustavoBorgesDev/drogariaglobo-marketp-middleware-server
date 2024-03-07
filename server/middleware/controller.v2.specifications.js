@@ -14,7 +14,7 @@ mmtz.tz('America/Sao_Paulo');
 const utilMd = require("../utils/sendDataMd");
 
 // '20 6 * * *' significa às 6:20 da manhã
-cron.schedule('30 19 * * *', () => {
+cron.schedule('45 20 * * *', () => {
     runUpdateSpecifications();
 });
 
@@ -43,12 +43,9 @@ const runUpdateSpecifications = async () => {
     console.log("Total EAN: ", respSpecs.length);
     console.log(`[3] - (Sucesso) - Todos EAN's atualizados.\n`);
 
-    let dataMessage = {};
-    if (req.body && req.body.message) {
-        dataMessage.message = `${req.body.message} - Total produtos: ${respSpecs.length}`;
-    } else {
-        dataMessage.message = "Mid. (v2) Specifications executado!";
-    }
+    let dataMessage = {
+        message: `Total produtos: ${respSpecs.length}`
+    };
 
     dataMessage.date = moment().tz("America/Sao_Paulo").format("DD/MM/YYYY HH:mm:ss");
 

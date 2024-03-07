@@ -16,17 +16,19 @@ const utilMd = require("../utils/sendDataMd");
 const utilToken = require("../utils/getInterplayersToken");
 const utilDate = require("../utils/getFormatedDateInISO");
 
-router.post("/middleware/v2/run-middleware-loadtables", async (req, res) => {
+const cron = require('node-cron');
 
+cron.schedule('15 20 * * *', () => {
+    runLoadtables();
+});
+
+const runLoadtables = async () => {
     console.log("\n\n\n----- [controller.loadtables.js] ----- \n");
     console.log("----- INICIANDO MIDDLWARE INTERPLAYERS ----- \n\n\n");
 
     console.log("[1] - Gerando o Token...\n");
     const respToken = await utilToken.getInterplayersToken();
     if (respToken.status != 200) {
-        res.json({
-            message: 'Erro no token'
-        })
         return; 
     }
 
@@ -51,12 +53,9 @@ router.post("/middleware/v2/run-middleware-loadtables", async (req, res) => {
     await saveLoadTables(dataLoadTables);
     console.log("[3.1] - Novo Load Tables salvo!\n");
 
-    let dataMessage = {};
-    if (req.body && req.body.message) {
-        dataMessage.message = `${req.body.message} - Total: ${respGetLoadTables.control.tableImage.length}`
-    } else {
-        dataMessage.message = `Mid. (v2) [Loadtables] executado - Total: ${respGetLoadTables.control.tableImage.length}`;
-    }
+    let dataMessage = {
+        message: `Mid. (v2) [Loadtables] executado - Total: ${respGetLoadTables.control.tableImage.length}`
+    };
 
     dataMessage.date = moment().tz("America/Sao_Paulo").format("DD/MM/YYYY HH:mm:ss");
     console.log("[4] - Salvando log da execução!\n");
@@ -69,19 +68,24 @@ router.post("/middleware/v2/run-middleware-loadtables", async (req, res) => {
     let respMd = await utilMd.sendDataMd(dataStatus, "SL");
     if (respMd.status == "201") {
         console.log("[4.1] - Log salvo!\n");
-        res.json({
-            message: dataMessage.message,
-            status: respMd.status
-        });
     } else {
         console.log("[4.1] - Log não salvo!\n");
-        res.json({
-            message: dataMessage.message,
-            status: respMd.status
-        });
     }
 
     console.log("[END] - Middleware [LOADTABLES] - Interplayers encerrado.\n");
+}
+
+router.post("/middleware/v2/run-middleware-loadtables", async (req, res) => {
+    try {
+        res.json({
+            message: "Sucesso loadtables."
+        });
+    }
+    catch (e) {
+        res.json({
+            message: "Erro."
+        });
+    }
 });
 
 // Action: Busca a carga do load tables
