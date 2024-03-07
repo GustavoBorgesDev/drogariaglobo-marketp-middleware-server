@@ -1,0 +1,15 @@
+git pull && git add . && git commit -m "desenvolvimento" && git push -u origin master && git push heroku master
+git add . && git commit -m "desenvolvimento" && git push -u origin master && git push heroku master
+
+heroku login
+git add .
+git commit -am "make it better"
+
+heroku account = gustavo.borges@orionct.com
+
+Meu cpf do borges.devfc
+28042281005
+19265995009
+
+
+http://localhost:5000
