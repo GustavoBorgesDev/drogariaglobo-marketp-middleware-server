@@ -6,7 +6,7 @@ const dm = require("../configs/domains");
 const cron = require('node-cron');
 
 // Neste caso, '0 6 * * *' significa todos os dias às 6 da manhã
-cron.schedule('15 6 * * *', () => {
+cron.schedule('05 11 * * *', () => {
     runClearProds();
 });
 

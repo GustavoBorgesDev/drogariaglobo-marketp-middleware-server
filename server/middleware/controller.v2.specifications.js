@@ -14,7 +14,7 @@ mmtz.tz('America/Sao_Paulo');
 const utilMd = require("../utils/sendDataMd");
 
 // '20 6 * * *' significa às 6:20 da manhã
-cron.schedule('45 6 * * *', () => {
+cron.schedule('25 11 * * *', () => {
     runUpdateSpecifications();
 });
 
@@ -105,66 +105,63 @@ const getAllProductsByEAN = async (listEAN) => {
 
     for (let eanToVerify of listEAN.tableImage) {
 
-        if (eanToVerify.ean == 7899706192712) {
-            try {
+        try {
 
-                let respRequest = await getEAN(eanToVerify.ean);
-                let respProdcutRequest = await getProductData(respRequest.data.ProductId);
-                let dataProduct = respProdcutRequest.data[0];
+            let respRequest = await getEAN(eanToVerify.ean);
+            let respProdcutRequest = await getProductData(respRequest.data.ProductId);
+            let dataProduct = respProdcutRequest.data[0];
 
-                let vtexPrice = dataProduct.items[0].sellers[0].commertialOffer.Price;
-                let vtexListPrice = dataProduct.items[0].sellers[0].commertialOffer.ListPrice;
+            let vtexPrice = dataProduct.items[0].sellers[0].commertialOffer.Price;
+            let vtexListPrice = dataProduct.items[0].sellers[0].commertialOffer.ListPrice;
 
-                // let betterDiscount = findBestterDiscount(vtexPrice, eanToVerify);
-                let betterDiscount = findBestterDiscount(vtexListPrice, eanToVerify);
-                let betterDiscValue = betterDiscount.newPriceDiscount;
+            // let betterDiscount = findBestterDiscount(vtexPrice, eanToVerify);
+            let betterDiscount = findBestterDiscount(vtexListPrice, eanToVerify);
+            let betterDiscValue = betterDiscount.newPriceDiscount;
 
-                if (typeof betterDiscValue === 'number') {
-                    betterDiscValue = betterDiscValue.toString();
-                }
-
-                let formatedPrices = {
-                    discountPrice: betterDiscValue,
-                    discountPriceFormated: `R$ ${betterDiscValue.replace(".", ",")}`,
-                    discountPercentage: betterDiscount.btDiscPercentage
-                }
-
-                let table = {
-                    tableId: listEAN.tableId
-                };
-
-                let productId = {
-                    id: dataProduct.productId
-                }
-
-                let infoCombo = null;
-                if (
-                    (eanToVerify.eanCombos.ean && eanToVerify.eanCombos.ean.length > 1) ||
-                    (eanToVerify.eanCombos.ean && eanToVerify.eanCombos.ean.length == 1 && eanToVerify.eanCombos.ean[0] != "SEM DESCONTO COMBO")
-                ) {
-                    infoCombo = {
-                        listCombos: eanToVerify.eanCombos.ean
-                    }
-                } else {
-                    infoCombo = {
-                        listCombos: "SEM DESCONTO COMBO"
-                    }
-                }
-
-                let eanData = { ...eanToVerify, formatedPrices, table, productId, infoCombo };
-
-                console.log(`[${countFounded}] - EAN: [${eanToVerify.ean}] foi organizado. Salvando para o proximo passo.`);
-
-                listEanValided.push(eanData);
-                listEanToSave.push(eanToVerify);
-                countFounded++;
-
-            } catch (e) {
-                console.log(`EAN: ${eanToVerify.ean} não verificado.`);
-                countNotFound++;
+            if (typeof betterDiscValue === 'number') {
+                betterDiscValue = betterDiscValue.toString();
             }
-        }
 
+            let formatedPrices = {
+                discountPrice: betterDiscValue,
+                discountPriceFormated: `R$ ${betterDiscValue.replace(".", ",")}`,
+                discountPercentage: betterDiscount.btDiscPercentage
+            }
+
+            let table = {
+                tableId: listEAN.tableId
+            };
+
+            let productId = {
+                id: dataProduct.productId
+            }
+
+            let infoCombo = null;
+            if (
+                (eanToVerify.eanCombos.ean && eanToVerify.eanCombos.ean.length > 1) ||
+                (eanToVerify.eanCombos.ean && eanToVerify.eanCombos.ean.length == 1 && eanToVerify.eanCombos.ean[0] != "SEM DESCONTO COMBO")
+            ) {
+                infoCombo = {
+                    listCombos: eanToVerify.eanCombos.ean
+                }
+            } else {
+                infoCombo = {
+                    listCombos: "SEM DESCONTO COMBO"
+                }
+            }
+
+            let eanData = { ...eanToVerify, formatedPrices, table, productId, infoCombo };
+
+            console.log(`[${countFounded}] - EAN: [${eanToVerify.ean}] foi organizado. Salvando para o proximo passo.`);
+
+            listEanValided.push(eanData);
+            listEanToSave.push(eanToVerify);
+            countFounded++;
+
+        } catch (e) {
+            console.log(`EAN: ${eanToVerify.ean} não verificado.`);
+            countNotFound++;
+        }
 
     }
 
