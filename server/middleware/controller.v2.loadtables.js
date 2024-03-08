@@ -18,7 +18,7 @@ const utilDate = require("../utils/getFormatedDateInISO");
 
 const cron = require('node-cron');
 
-cron.schedule('05 6 * * *', () => {
+cron.schedule('5 6 * * *', () => {
     runLoadtables();
 });
 

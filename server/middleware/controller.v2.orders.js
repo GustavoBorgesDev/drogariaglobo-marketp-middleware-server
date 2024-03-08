@@ -17,7 +17,7 @@ mmtz.tz('America/Sao_Paulo');
 const utilMd = require("../utils/sendDataMd");
 
 // '40 6 * * *' significa às 6:40 da manhã
-cron.schedule('07 05 * * *', () => {
+cron.schedule('10 6 * * *', () => {
     runOrders();
 });
 
