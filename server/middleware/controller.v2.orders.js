@@ -17,7 +17,7 @@ mmtz.tz('America/Sao_Paulo');
 const utilMd = require("../utils/sendDataMd");
 
 // '40 6 * * *' significa às 6:40 da manhã
-cron.schedule('05 21 * * *', () => {
+cron.schedule('07 05 * * *', () => {
     runOrders();
 });
 
@@ -157,12 +157,9 @@ const runOrders = async () => {
 
     console.log("[5.1] - Confirmação feita!\n");
 
-    let dataMessage = {};
-    if (req.body && req.body.message) {
-        dataMessage.message = `${req.body.message} - Total: ${listConfirmed.length}`;
-    } else {
-        dataMessage.message = `Mid. (v2) [Orders] executado! Total pedidos confirmados: ${listConfirmed.length}`;
-    }
+    let dataMessage = {
+        message: `Mid. (v2) [Orders] executado! Total pedidos confirmados: ${listConfirmed.length}`
+    };
 
     dataMessage.date = moment().tz("America/Sao_Paulo").format("DD/MM/YYYY HH:mm:ss");
 
