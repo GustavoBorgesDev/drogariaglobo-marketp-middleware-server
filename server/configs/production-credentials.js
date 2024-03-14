@@ -1,8 +1,9 @@
 module.exports = {
     clientId: "29254069-7992-4b72-8091-bf2b65ba41e7",
-    username: "x1V49&uGJzBCGNIG", // Client Secret somente no token
+    username: "29254069-7992-4b72-8091-bf2b65ba41e7", // Client Secret somente no token
     companyCode: "63503007000146"  
 }
+// x1V49&uGJzBCGNIG
 
 // Globo E-commerce
 
