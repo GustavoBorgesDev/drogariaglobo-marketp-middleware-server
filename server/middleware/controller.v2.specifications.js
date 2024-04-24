@@ -14,9 +14,9 @@ mmtz.tz('America/Sao_Paulo');
 const utilMd = require("../utils/sendDataMd");
 
 // '20 6 * * *' significa às 6:20 da manhã
-// cron.schedule('45 6 * * *', () => {
-//     runUpdateSpecifications();
-// });
+cron.schedule('45 6 * * *', () => {
+    runUpdateSpecifications();
+});
 
 const runUpdateSpecifications = async () => {
     console.log("\n\n\n----- [controller.specifications.js] ----- \n");
@@ -401,5 +401,5 @@ const formatDiscount = (discount) => {
     valueDiscount = valueDiscount / 100;
     return valueDiscount;
 }
-runUpdateSpecifications()
+
 module.exports = router;
