@@ -14,9 +14,9 @@ mmtz.tz('America/Sao_Paulo');
 const utilMd = require("../utils/sendDataMd");
 
 // '20 6 * * *' significa às 6:20 da manhã
-// cron.schedule('45 6 * * *', () => {
-//     runUpdateSpecifications();
-// });
+cron.schedule('45 6 * * *', () => {
+    runUpdateSpecifications();
+});
 
 const runUpdateSpecifications = async () => {
     console.log("\n\n\n----- [controller.specifications.js] ----- \n");
@@ -313,36 +313,32 @@ const findBestterDiscount = (vtexPrice, eanData) => {
 
     try {
         switch (true) {
-            // DESCONTO POR NOVO PACIENTE (MELHOR DESCONTO)
-            case Number(eanData.discountMaxNewPatient) > 0:
-                console.log("CASE - A\n");
-                discountValue = formatDiscount(eanData.discountMaxNewPatient).toFixed(2);
-                betterDiscount = (vtexPrice * discountValue).toFixed(2);
-                discountSelected = eanData.discountMaxNewPatient;
-                break;
-            // DESCONTO MINIMO
-            case Number(eanData.discountMin) > 0:
-                console.log("CASE - B\n");
-                discountValue = formatDiscount(eanData.discountMin).toFixed(2);
-                betterDiscount = (vtexPrice * discountValue).toFixed(2);
-                discountSelected = eanData.discountMin;
-                break;
-            // DESCONTO MAXIMO (MELHOR DESCONTO)
             case Number(eanData.discountMax) > 0:
-                console.log("CASE - C\n");
-                console.log(Number(eanData.discountMax));
+                console.log("CASE - A\n");
                 discountValue = formatDiscount(eanData.discountMax).toFixed(2);
                 betterDiscount = (vtexPrice * discountValue).toFixed(2);
                 discountSelected = eanData.discountMax;
                 break;
-            // DESCONTO ABSOLUTO
+            case Number(eanData.discountMaxNewPatient) > 0:
+                console.log("CASE - B\n");
+                discountValue = formatDiscount(eanData.discountMaxNewPatient).toFixed(2);
+                betterDiscount = (vtexPrice * discountValue).toFixed(2);
+                discountSelected = eanData.discountMaxNewPatient;
+                break;
+            case Number(eanData.discountMin) > 0:
+                console.log("CASE - C\n");
+                discountValue = formatDiscount(eanData.discountMin).toFixed(2);
+                betterDiscount = (vtexPrice * discountValue).toFixed(2);
+                discountSelected = eanData.discountMin;
+                break;
             case Number(eanData.discountAbsolute) > 0:
-                console.log("CASE - D\n");
+                console.log("CASE - E\n");
+                console.log("VtexPrice: ", vtexPrice);
+                console.log("Desconto: ", eanData.discountAbsolute);
                 discountValue = formatDiscount(eanData.discountAbsolute).toFixed(2);
                 betterDiscount = (vtexPrice * discountValue).toFixed(2);
                 discountSelected = eanData.discountAbsolute;
                 break;
-            // SEM DESCONTO (MANTENHO PRECO DA VTEX)
             default:
                 console.log("CASE - F\n");
                 betterDiscount = vtexPrice;
@@ -401,5 +397,5 @@ const formatDiscount = (discount) => {
     valueDiscount = valueDiscount / 100;
     return valueDiscount;
 }
-runUpdateSpecifications()
+
 module.exports = router;

@@ -17,6 +17,7 @@ const utilMd = require("../utils/sendDataMd");
 // cron.schedule('45 6 * * *', () => {
 //     runUpdateSpecifications();
 // });
+//runUpdateSpecifications();
 
 const runUpdateSpecifications = async () => {
     console.log("\n\n\n----- [controller.specifications.js] ----- \n");
@@ -37,6 +38,9 @@ const runUpdateSpecifications = async () => {
     console.log("[2] - Buscando os EAN's existentes...\n");
     const respListProductsOn = await getAllProductsByEAN(listProductsEAN);
     console.log(`\n[2] - (Sucesso) - EAN's do programa verificados. Total: ${respListProductsOn.eanValided.length} \n`);
+
+    
+    return;
 
     console.log("[3] - Atualizando as especificações dos Produtos...\n");
     const respSpecs = await updateEANspecifications(respListProductsOn);
@@ -107,56 +111,58 @@ const getAllProductsByEAN = async (listEAN) => {
 
         try {
 
-            let respRequest = await getEAN(eanToVerify.ean);
-            let respProdcutRequest = await getProductData(respRequest.data.ProductId);
-            let dataProduct = respProdcutRequest.data[0];
-
-            let vtexPrice = dataProduct.items[0].sellers[0].commertialOffer.Price;
-            let vtexListPrice = dataProduct.items[0].sellers[0].commertialOffer.ListPrice;
-
-            // let betterDiscount = findBestterDiscount(vtexPrice, eanToVerify);
-            let betterDiscount = findBestterDiscount(vtexListPrice, eanToVerify);
-            let betterDiscValue = betterDiscount.newPriceDiscount;
-
-            if (typeof betterDiscValue === 'number') {
-                betterDiscValue = betterDiscValue.toString();
-            }
-
-            let formatedPrices = {
-                discountPrice: betterDiscValue,
-                discountPriceFormated: `R$ ${betterDiscValue.replace(".", ",")}`,
-                discountPercentage: betterDiscount.btDiscPercentage
-            }
-
-            let table = {
-                tableId: listEAN.tableId
-            };
-
-            let productId = {
-                id: dataProduct.productId
-            }
-
-            let infoCombo = null;
-            if (
-                (eanToVerify.eanCombos.ean && eanToVerify.eanCombos.ean.length > 1) ||
-                (eanToVerify.eanCombos.ean && eanToVerify.eanCombos.ean.length == 1 && eanToVerify.eanCombos.ean[0] != "SEM DESCONTO COMBO")
-            ) {
-                infoCombo = {
-                    listCombos: eanToVerify.eanCombos.ean
+            if (eanToVerify.ean == 7896261012936) {
+                let respRequest = await getEAN(eanToVerify.ean);
+                let respProdcutRequest = await getProductData(respRequest.data.ProductId);
+                let dataProduct = respProdcutRequest.data[0];
+    
+                let vtexPrice = dataProduct.items[0].sellers[0].commertialOffer.Price;
+                let vtexListPrice = dataProduct.items[0].sellers[0].commertialOffer.ListPrice;
+    
+                // let betterDiscount = findBestterDiscount(vtexPrice, eanToVerify);
+                let betterDiscount = findBestterDiscount(vtexListPrice, eanToVerify);
+                let betterDiscValue = betterDiscount.newPriceDiscount;
+    
+                if (typeof betterDiscValue === 'number') {
+                    betterDiscValue = betterDiscValue.toString();
                 }
-            } else {
-                infoCombo = {
-                    listCombos: "SEM DESCONTO COMBO"
+    
+                let formatedPrices = {
+                    discountPrice: betterDiscValue,
+                    discountPriceFormated: `R$ ${betterDiscValue.replace(".", ",")}`,
+                    discountPercentage: betterDiscount.btDiscPercentage
                 }
+    
+                let table = {
+                    tableId: listEAN.tableId
+                };
+    
+                let productId = {
+                    id: dataProduct.productId
+                }
+    
+                let infoCombo = null;
+                if (
+                    (eanToVerify.eanCombos.ean && eanToVerify.eanCombos.ean.length > 1) ||
+                    (eanToVerify.eanCombos.ean && eanToVerify.eanCombos.ean.length == 1 && eanToVerify.eanCombos.ean[0] != "SEM DESCONTO COMBO")
+                ) {
+                    infoCombo = {
+                        listCombos: eanToVerify.eanCombos.ean
+                    }
+                } else {
+                    infoCombo = {
+                        listCombos: "SEM DESCONTO COMBO"
+                    }
+                }
+    
+                let eanData = { ...eanToVerify, formatedPrices, table, productId, infoCombo };
+    
+                console.log(`[${countFounded}] - EAN: [${eanToVerify.ean}] foi organizado. Salvando para o proximo passo.`);
+    
+                listEanValided.push(eanData);
+                listEanToSave.push(eanToVerify);
+                countFounded++;
             }
-
-            let eanData = { ...eanToVerify, formatedPrices, table, productId, infoCombo };
-
-            console.log(`[${countFounded}] - EAN: [${eanToVerify.ean}] foi organizado. Salvando para o proximo passo.`);
-
-            listEanValided.push(eanData);
-            listEanToSave.push(eanToVerify);
-            countFounded++;
 
         } catch (e) {
             console.log(`EAN: ${eanToVerify.ean} não verificado.`);
@@ -350,6 +356,7 @@ const findBestterDiscount = (vtexPrice, eanData) => {
 
         let resultPrice = null;
         if (betterDiscount != vtexPrice) {
+            console.log("Price A");
             btDiscPercentage = (Number(discountSelected) / 100).toFixed(2);
             btDiscPercentage = btDiscPercentage.split(".")[0];
             btDiscPercentage = btDiscPercentage + '%';
@@ -359,11 +366,13 @@ const findBestterDiscount = (vtexPrice, eanData) => {
         }
         // Se for igual
         else if (betterDiscount == vtexPrice) {
+            console.log("Price B");
             // console.log("VtexPrice: ", vtexPrice)
             resultPrice = vtexPrice;
         }
         // Se o valor do desconto da loja for maior que o do PBM considero o da loja
         else if (resultPrice > vtexPrice) {
+            console.log("Price C");
             resultPrice = vtexPrice;
         } else {
             console.log("Cenario que nao sei.");
@@ -401,5 +410,5 @@ const formatDiscount = (discount) => {
     valueDiscount = valueDiscount / 100;
     return valueDiscount;
 }
-runUpdateSpecifications()
+runUpdateSpecifications();
 module.exports = router;
