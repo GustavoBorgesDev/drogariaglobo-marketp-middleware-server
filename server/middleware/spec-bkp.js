@@ -313,32 +313,36 @@ const findBestterDiscount = (vtexPrice, eanData) => {
 
     try {
         switch (true) {
-            case Number(eanData.discountMax) > 0:
-                console.log("CASE - A\n");
-                discountValue = formatDiscount(eanData.discountMax).toFixed(2);
-                betterDiscount = (vtexPrice * discountValue).toFixed(2);
-                discountSelected = eanData.discountMax;
-                break;
+            // DESCONTO POR NOVO PACIENTE (MELHOR DESCONTO)
             case Number(eanData.discountMaxNewPatient) > 0:
-                console.log("CASE - B\n");
+                console.log("CASE - A\n");
                 discountValue = formatDiscount(eanData.discountMaxNewPatient).toFixed(2);
                 betterDiscount = (vtexPrice * discountValue).toFixed(2);
                 discountSelected = eanData.discountMaxNewPatient;
                 break;
+            // DESCONTO MINIMO
             case Number(eanData.discountMin) > 0:
-                console.log("CASE - C\n");
+                console.log("CASE - B\n");
                 discountValue = formatDiscount(eanData.discountMin).toFixed(2);
                 betterDiscount = (vtexPrice * discountValue).toFixed(2);
                 discountSelected = eanData.discountMin;
                 break;
+            // DESCONTO MAXIMO (MELHOR DESCONTO)
+            case Number(eanData.discountMax) > 0:
+                console.log("CASE - C\n");
+                console.log(Number(eanData.discountMax));
+                discountValue = formatDiscount(eanData.discountMax).toFixed(2);
+                betterDiscount = (vtexPrice * discountValue).toFixed(2);
+                discountSelected = eanData.discountMax;
+                break;
+            // DESCONTO ABSOLUTO
             case Number(eanData.discountAbsolute) > 0:
-                console.log("CASE - E\n");
-                console.log("VtexPrice: ", vtexPrice);
-                console.log("Desconto: ", eanData.discountAbsolute);
+                console.log("CASE - D\n");
                 discountValue = formatDiscount(eanData.discountAbsolute).toFixed(2);
                 betterDiscount = (vtexPrice * discountValue).toFixed(2);
                 discountSelected = eanData.discountAbsolute;
                 break;
+            // SEM DESCONTO (MANTENHO PRECO DA VTEX)
             default:
                 console.log("CASE - F\n");
                 betterDiscount = vtexPrice;
